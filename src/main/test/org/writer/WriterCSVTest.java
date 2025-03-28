@@ -26,6 +26,7 @@ class WriterCSVTest {
 
     Months[] months = Months.values();
 
+
     @Test
     void writeToFile_NormalData_WritesCorrectCSV() throws Exception {
         List<Person> persons = IntStream.range(0, 30)
@@ -68,7 +69,8 @@ class WriterCSVTest {
         List<Field> fields = csvWriter.getAnnotatedFields(Person.class);
 
         System.out.println(fields);
-        String[] expectedOrder = {"firstName", "lastName", "dayOfBirth", "monthOfBirth", "yearOfBirth"};        for (int i = 0; i < expectedOrder.length; i++) {
+        String[] expectedOrder = {"firstName", "lastName", "dayOfBirth", "monthOfBirth", "yearOfBirth"};
+        for (int i = 0; i < expectedOrder.length; i++) {
             assertEquals(expectedOrder[i], fields.get(i).getName());
         }
     }
@@ -118,9 +120,23 @@ class WriterCSVTest {
     }
 
     @Test
-    void writeToFile_EmptyList_NoFileCreated() {
+    void writeToFile_EmptyList_throwsException() {
         Path file = tempDir.resolve("empty.csv");
-        csvWriter.writeToFile(List.of(), file.toString());
-        assertFalse(Files.exists(file));
+        assertThrows(IllegalArgumentException.class, () -> csvWriter.writeToFile(List.of(), file.toString()), "java.lang.IllegalArgumentException: Data should not be null or empty");
+    }
+
+    @Test
+    void writeToFile_NullFileName_throwsException() {
+        List<Person> persons = IntStream.range(0, 30)
+                .mapToObj(i -> Person.builder()
+                        .firstName(faker.name().firstName())
+                        .lastName(faker.name().lastName())
+                        .dayOfBirth(faker.number().numberBetween(1, 31))
+                        .monthOfBirth(months[ThreadLocalRandom.current().nextInt(months.length)])
+                        .yearOfBirth(faker.number().numberBetween(1900, 2023))
+                        .build())
+                .toList();
+        String fileName = null;
+        assertThrows(IllegalArgumentException.class, () -> csvWriter.writeToFile(persons, fileName), "java.lang.IllegalArgumentException: Data should not be null or empty");
     }
 }

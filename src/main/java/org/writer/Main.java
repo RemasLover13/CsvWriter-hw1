@@ -3,12 +3,15 @@ package org.writer;
 import net.datafaker.Faker;
 import org.writer.model.Months;
 import org.writer.model.Person;
+import org.writer.model.Sample;
 import org.writer.model.Student;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main {
@@ -38,8 +41,35 @@ public class Main {
                 ))
                 .toList();
 
+        List<Sample> samplesFaker = IntStream.range(0, 5)
+                .mapToObj(i -> {
+                    String[] strings = IntStream.range(0, 5)
+                            .mapToObj(j -> faker.studioGhibli()
+                                    .character())
+                            .toArray(String[]::new);
+
+                    Double[] doubles = IntStream.range(0, 5)
+                            .mapToObj(j -> faker.number().randomDouble(1, 1, 500))
+                            .toArray(Double[]::new);
+
+                    Set<Integer> integerSet = IntStream.range(0, 5)
+                            .map(j -> faker.number().numberBetween(100, 999))
+                            .boxed()
+                            .collect(Collectors.toSet());
+
+                    Map<String, String> map = IntStream.range(0, 5)
+                            .boxed()
+                            .collect(Collectors.toMap(
+                                    k -> "key_" + faker.name().firstName(),
+                                    v -> "value_" + faker.code().asin()
+                            ));
+
+                    return new Sample(strings, doubles, integerSet, map);
+                })
+                .toList();
+
         new WriterCSV().writeToFile(personsFaker, "persons.csv");
         new WriterCSV().writeToFile(studentsFaker, "students.csv");
-        new WriterCSV().writeToFile(Collections.emptyList(), "empty.csv");
+        new WriterCSV().writeToFile(samplesFaker, "samples.csv");
     }
 }

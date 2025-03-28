@@ -4,12 +4,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,10 +36,18 @@ public class WriterCSV implements Writable {
      *
      * @param data     список объектов одного типа
      * @param fileName имя целевого файла (например, "data.csv")
+     * @throws IllegalArgumentException если аргументы некорректны
      */
     @Override
     public void writeToFile(List<?> data, String fileName) {
-        if (data == null || data.isEmpty()) return;
+        if (data == null || data.isEmpty()) {
+            throw new IllegalArgumentException("Data should not be null or empty");
+        }
+
+        if (fileName == null || fileName.isEmpty()) {
+            throw new IllegalArgumentException("File name should not be null or empty");
+        }
+
         Class<?> clazz = data.get(0).getClass();
 
         try (FileOutputStream fos = new FileOutputStream(fileName);
@@ -114,8 +120,9 @@ public class WriterCSV implements Writable {
      * Правила преобразования:
      * <ul>
      *   <li>null → пустая строка</li>
-     *   <li>List → элементы через ";"</li>
+     *   <li>Все коллекции и массивы → элементы через ";"</li>
      *   <li>Enum → имя константы</li>
+     *   <li>Map → key:value;</li>
      *   <li>Остальные типы → toString()</li>
      * </ul>
      *
@@ -123,14 +130,40 @@ public class WriterCSV implements Writable {
      * @return CSV-совместимая строка
      */
     private String convertValue(Object value) {
-        if (value == null) return "";
-        if (value instanceof List) {
-            return ((List<?>) value).stream()
-                    .map(Object::toString)
-                    .map(this::escapeCsv)
+        if (value == null) {
+            return "";
+        }
+
+        if (value instanceof Map<?, ?>) {
+            return ((Map<?, ?>) value).entrySet().stream()
+                    .map(entry ->
+                            escapeCsv(entry.getKey().toString()) + ":" +
+                            escapeCsv(entry.getValue().toString())
+                    )
                     .collect(Collectors.joining(";"));
         }
-        if (value instanceof Enum) return ((Enum<?>) value).name();
+
+        if (value instanceof Collection<?>) {
+            return ((Collection<?>) value).stream()
+                    .map(this::convertValue)
+                    .collect(Collectors.joining(";"));
+        }
+
+        if (value.getClass().isArray()) {
+            int length = Array.getLength(value);
+            List<Object> elements = new ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                elements.add(Array.get(value, i));
+            }
+            return elements.stream()
+                    .map(this::convertValue)
+                    .collect(Collectors.joining(";"));
+        }
+
+        if (value instanceof Enum) {
+            return ((Enum<?>) value).name();
+        }
+
         return escapeCsv(value.toString());
     }
 
@@ -147,7 +180,9 @@ public class WriterCSV implements Writable {
      * @return экранированная строка
      */
     private String escapeCsv(String value) {
-        if (value == null) return "";
+        if (value == null) {
+            return "";
+        }
 
         boolean needsQuotes = value.contains(",")
                               || value.contains("\"")
