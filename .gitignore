@@ -1,3 +1,4 @@
+# Target directories (Maven)
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -36,3 +37,31 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Gradle ###
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Ignore Gradle wrapper files if not needed
+# Uncomment the following lines if you want to ignore the wrapper:
+# gradle-wrapper.jar
+# gradlew
+# gradlew.bat
+# gradle/
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*~
+
+# Environment-specific files
+.env
+.local.*
+.secret.*
+
+# Dependency caches
+.m2/
