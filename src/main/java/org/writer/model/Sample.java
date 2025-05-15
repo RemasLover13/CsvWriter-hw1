@@ -3,6 +3,7 @@ package org.writer.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.writer.CSV;
 
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class Sample {
 
     @CSV(order = 1, headerField = "strings")
